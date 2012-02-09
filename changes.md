@@ -1,3 +1,8 @@
+日本語第一版 (1st edition, 3rd revision)
+
+メンテナンス性を重視して、全文をMarkdownに移行します。
+
+
 1st edition, 3rd revision
 
 p 10
