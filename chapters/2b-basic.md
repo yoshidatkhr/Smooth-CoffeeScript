@@ -1,7 +1,7 @@
-##<a name = "ベーシック CoffeeScript">ベーシック CoffeeScript</a>
+#<a name = "ベーシック CoffeeScript">ベーシック CoffeeScript</a>
 -	**値、変数と操作方法**
 
-###値、変数と操作方法
+##値、変数と操作方法
 
 コンピュータ世界はデータのみで出来ています。データでないものは存在しません。事実、すべてのデータはビットの固まりから作られ、各データはそれぞれの役割を担っています。CoffeeScriptシステムにおいて、ほとんどのデータは値というモノに分割されます。値の型は6種類あり、数値型（Numbers）、文字列型（Strings）、真  偽値（Booleans）、オブジェクト型（Objects）、関数型（Functions）、（Underfined）未定義型に分けられます。
 
