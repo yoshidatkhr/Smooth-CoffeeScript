@@ -1,4 +1,4 @@
-![image](img/SmoothCoverWithSolutions.jpg)
+![image](img/SmoothCoverWithSolutionsJN.jpg)
 
 ---
 #Smooth CoffeeScript 日本語版
