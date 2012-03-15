@@ -6,46 +6,36 @@
 
 いま関数を「コードの缶詰」と表現しましたが、関数の役割はこれだけではありません。純粋関数、アルゴリズム、間接参照、抽象化、意思決定、モジュール、継続、データ構造など、関数は用途に応じて様々な役割を果たすことができます。関数を上手に使いこなすスキルは、プロフェッショナルなプログラマにとっては必要不可欠です。この章では、関数の大まかな紹介を行ってゆきますこの章は、関数のイントロダクションになります。より細かな説明に関しては、関数プログラミングを参照して下さい。
 
+---
+
 まず純粋関数から説明してゆきましょう。純粋関数とは、皆さんがかつて数学の授業で学んだであろう、いわゆる数学の関数のことを指します。ある数値のコサインや絶対値などを求めるのは、引数が１個の純粋関数にあたります。加算は引数２の純粋関数です。純粋関数の重要な特徴として、同じ引数を与えた場合に必ず同じ値を返し、決して副作用を持たない、というものがあります。いくつかの引数を取り、それらの値に基づいた計算結果を返す以外に、何も余計なことは行いません。
 
 CoffeeScriptでは、加算は演算子として存在しますが、このように関数でラッピングすることもできます（無意味に見えるかもしれません。しかしこれが実際に役立つケースを後ほど紹介します）。
 
-add = (a, b) -> a + b
-show add 2, 2 
+	add = (a, b) -> a + b
+	show add 2, 2 
 
 addは関数の名前、そしてaとbが２つの引数の名前です。a+bは、関数の本体となります。「->」は、新しく関数を作るときに使います。ある変数の名前を割り当てたときに、その関数名の下にその関数が保存されます。「->」の前には、括弧で囲まれた引数リストがきます。関数は引数を取らない場合は、括弧は必要ありません。「->」の後は関数の本体です。関数本体は「->」の後の同じ行に書き切っても続けてもいいですし、インデントを設定して次以降の行に書いても構いません。関数の最後の命令文は関数の戻り値となります。また、予約語であるreturnの後に式を書けば、その式が関数の戻り値になります。 プログラムはreturn文を処理した時点で直ちに関数から抜け出し、その関数の呼び出し元のコードに、計算結果である戻り値を渡すことになります。式の無いreturn文の場合、関数はundefinedを返します。関数本体には、もちろん複数の命令文を記述することができます。ではここで、自然数のべき乗を求める関数を見てみましょう。
 
-power = (base, exponent) ->
-
-  result = 1
-
-  for count in [0...exponent]
-
-    result *= base
-
-  result
-
-show power 2, 10
+	power = (base, exponent) ->
+	  result = 1
+	  for count in [0...exponent]
+    	result *= base
+	  result
+	show power 2, 10
 
 ３２ページの練習問題を解かれた方には、このべき乗の計算方法には見覚えがあるはずです。変数（計算結果）を作り、その値を更新することは副作用と言えます。しかし私はつい先ほど、純粋関数には副作用がないと言ったばかりですよね？実は関数内で生成された変数は、その関数の中でのみ有効なのです。おかげでプログラマーは、「プログラム内のあらゆる変数にそれぞれ異なった名前をつけなければいけない」などという羽目に陥らずに済むのです。resultはpower関数の中でのみ存在する変数であり、値の変更も関数が戻るまでしか有効ではありません。それゆえ関数を呼び出したコードの側から見れば、副作用は全く発生していないことになります。
 
-練習問題7
+##練習問題7
 
 引数にnumber型を取り、その数値の絶対値を返すabsolute関数を書いてください。負の数の絶対値はその数のマイナス符号を外したもので、正の数あるいは０の絶対値は、その数そのものを指すこととします。
 
-解答
+###解答
 
-absolute = (number) ->
-
-  if number < 0
-
-    -number
-
-  else
-
-    number
-
-show absolute -144
+	absolute = (number) -> 
+	  if number < 0
+	    -number 
+	  else		number	show absolute -144
 
 純粋関数には、２つのメリットあります。作り出すのも再利用するのも簡単だということです。
 
@@ -61,103 +51,77 @@ show absolute -144
 
 従って、もし純粋関数で問題を簡単に記述できる場合、純粋関数を使うべきでしょう。しかし間違っても非純粋関数を嫌ってはいけません。
 
+---
+
 関数が期待した値を返してくれるかどうかは、どうやって証明すべきでしょうか？先ほどの練習問題では、absolute -144を実行し、正しい答えを得ることができました。シンプルな関数にはこれで充分でしょうが、関数というものは一瞬で途方も無く複雑になり、プログラムコードを読みだけでは戻り値を予測するのが困難になってゆきます。absolute関数がちゃんと動いているか確認するには、もっと多くのテストケースが必要です。しかし、ひたすらテストケースを書き続けるばかりではすぐに飽きが来てしまいます。何かいい方法は無いでしょうか…。
 
 練習問題では、関数が果たすべき機能として次のように書かれていました。「負の数の絶対値はその数のマイナス符号を取ったもので、正の数あるいは０の絶対値は、その数そのものを指すこととします。」この説明を、コンピュータが理解してテストできる「プロパティ」に置き換えてみましょう。
 
-testAbsolute = (name, property) ->
-
-  qc.testPure absolute , [qc.arbInt], name, property
+	testAbsolute = (name, property) ->
+  	  qc.testPure absolute , [qc.arbInt], name, property
 
 testAbsolute関数はqc (quick check11を意味します)のtestPure関数を呼び出し、最初の引数でabsolute関数をテストするようtestPure関数に指示しています。次の引数arbIntは、absolute関数が「引数に任意の整数値を取ること」を意味しています。角括弧やドット記号は気にしないでください。これらは次章で説明します。testAbsolute関数に分かり易い説明文とプロパティを与えて呼び出すことにより、absolute関数にどのような挙動を求められているのかを定義することができます。
 
-testAbsolute 'returns positive integers',
-
-  (c, arg, result) -> result >= 0
+	testAbsolute 'returns positive integers',
+      (c, arg, result) -> result >= 0
 
 まず関数の説明から、absolute関数が0以上の値を返さなければいけないのは明白です。プロパティ内のresult >= 0がそのことを意味しています。ここでのプロパティは、「テストケース（caseが予約語なので、cを使っています）」「absolute関数を呼び出す時の引数」「absolute関数の戻り値」の、計３つの引数を取る関数です。
 
 11QuickCheckはチャルマース工科大学のKoen ClaessenとJohn HughesがHaskell向けに開発したものですが、他のプログラミング言語用にも次々に再実装されてきています。qcライブラリは、Darrin ThompsonによるJavaScript向けの実装です。CoffeeScript対応版は、preludeに含まれています。
 
-
-
-- 48 -
-
 これらの値に応じて、プロパティは「関数が与えられた条件を満たしているかどうか」をtrueあるいはfalseで返します。関数の説明にはこう書いてあります。「正の数あるいは０の絶対値は、その数そのものを指すこととします。」このプロパティには正の数しか必要ありません。guardの呼び出しは、qcに正ではない値を無視するように伝えます。そしてプロパティは戻り値が引数と同じであることをチェックします。
 
-testAbsolute 'positive returns positive',
-
-  (c, arg, result) -> c.guard arg >= 0; result is arg
+	testAbsolute 'positive returns positive',
+  	  (c, arg, result) -> c.guard arg >= 0; result is arg
 
 負の数のチェックももほとんど同じで、違いはマイナス符号だけです。
 
-testAbsolute 'negative returns positive',
-
-  (c, arg, result) -> c.guard arg < 0; result is -arg
+	testAbsolute 'negative returns positive',
+  	  (c, arg, result) -> c.guard arg < 0; result is -arg
 
 ここまでの段階では、関数に必要なプロパティが宣言されただけです。テストは何一つ実行していません。qc.test()を呼び出せばテスト処理が開始され、qcがテスト用データを生成してプロパティのチェックを行います。
 
-Pass: returns positive integers (pass=100, invalid=0)
-Pass: positive returns positive (pass=100, invalid=103)
-Pass: negative returns positive (pass=100, invalid=90)
+	Pass: returns positive integers (pass=100, invalid=0)
+	Pass: positive returns positive (pass=100, invalid=103)
+	Pass: negative returns positive (pass=100, invalid=90)
 
 素晴らしいですね。absolute関数は、一瞬のうちに300ものテストケースをパスしてくれました。ちなみにinvalidの数は、guard関数の呼び出しによって無効にされたテストケースの数です。テスト値を表示させたい場合、プロパティ内にshow c.argsを入れて下さい。
 
 一方、テストが失敗した場合はどのように表示されるのでしょうか？ではご期待にお応えして、テストを失敗させる格好の素材として、本章の最初の方で紹介したpower関数を取り上げてみましょう。power関数は、標準ライブラリのMath.pow関数と同じ動作をするはずです（もちろん整数を対象にとる場合に限りますが）。
 
-qc.testPure power, [qc.arbInt , qc.arbInt],
-
-  'power == Math.pow for integers',
-
-  (c, base, exponent , result) ->
-
-    result == c.note Math.pow base, exponent
+	qc.testPure power, [qc.arbInt , qc.arbInt],
+	  'power == Math.pow for integers',
+	  (c, base, exponent , result) ->
+	    result == c.note Math.pow base, exponent
 
 それを確かめるには、まずtestPure関数を呼び出し、power関数が「２つの整数を引数として取る」ことを記述しましょう。そしてプロパティに、power関数の計算結果がMath.pow関数のそれと同じであることを示してやればいいのです。Math.pow関数の戻り値を得るため、c.noteを呼び出して元々の引数を登録しましょう。
 
-fail: power == Math.pow for integers
-
-pass=9, invalid=0
-
-shrinkedArgs=3,-2,9,0.1111111111111111
-
-Failed case:
-
-[ -9,
-
-  -9,
-
-  -387420489,
-
-  -2.581174791713197e-9 ]
+	fail: power == Math.pow for integers
+	pass=9, invalid=0
+	shrinkedArgs=3,-2,9,0.1111111111111111
+	Failed case:
+	[ -9,
+	  -9,
+	  -387420489,
+	  -2.581174791713197e-9 ]
 
 このテストは失敗し、qcはなぜ失敗したかを教えてくれます。行の後半に出てくる2つの-9は、qcがテストケース用に生成した引数です。-387420489は、power関数の戻り値です。最後の数値はMath.pow関数から得られたもので、-9-9=-1387420489の近似値になっています。
 
-qc.testPure power, [qc.arbWholeNum , qc.arbWholeNum],
-
-  'power == Math.pow for positive integers',
-
-  (c, base, exponent , result) ->
-
-  result == c.note Math.pow base, exponent
+	qc.testPure power, [qc.arbWholeNum , qc.arbWholeNum],
+	  'power == Math.pow for positive integers',
+	  (c, base, exponent , result) ->
+	    result == c.note Math.pow base, exponent
 
 整数用のpower関数は、その対象範囲が広すぎたかもしれません。しかし少なくとも自然数に関してはうまく動作していたのではないでしょうか？前の例のようにguard関数を使ってテストケースの範囲を狭める以外にも、引数の記述を変えるというやり方があります。qcは、引数としてrange型・string型・date型・リスト型など様々な種類の型を扱うことができます。自然数にはarbWholeNumが用意されています。
 
-fail: power == Math.pow for positive integers
-
-pass=28, invalid=0
-
-shrinkedArgs=9,18,150094635296999100,150094635296999140
-
-Failed case:
-
-[ 27,
-
-  27,
-
-  4.434264882430377e+38,
-
-  4.434264882430378e+38 ]
+	fail: power == Math.pow for positive integers
+	pass=28, invalid=0
+	shrinkedArgs=9,18,150094635296999100,150094635296999140
+	Failed case:
+	[ 27,
+	  27,
+	  4.434264882430377e+38,
+	  4.434264882430378e+38 ]
 
 さて今度は28個のテストをパスして、2727で止まりました。どうやら最後の桁の数字が違っているみたいです12。ここでshrinkedArgsと書かれた行に注目してください。qcはテストに失敗すると、同じ問題を発生させるテストの中で、よりシンプルなものを探し出そうとします。ここで言う「シンプル」とはより短い文字列やリストなどのことで、この場合はより小さな数値のことを指します。
 
@@ -165,239 +129,173 @@ Failed case:
 
 qcは918の段階で既に違いを見つけています。power関数の戻り値は100で終わり、Math.pow関数は140で終わっています。果たしてどちらが正しいのでしょうか？どちらも正しくありません13。 正解は918 = 150094635296999121です。
 
-練習問題8
+##練習問題8
 
 下記のプログラムをコピーして、intensify関数がテストプロパティをパスするように修正して下さい。223ページのqcリファレンスには、arbConstなど多くのqc用語の説明が載っています。preludeをrequireすると、c.noteVerboseが使えます。c.noteVerboseはテスト失敗時に値を記録したり、テスト時に値を表示させたりすることができます。
 
-require './prelude'
+	require './prelude'
 
-intensify = (n) ->
+	intensify = (n) ->
+	  2
 
-  2
+	qc.testPure intensify , [qc.arbInt],
+	  'intensify grows by 2 when positive',
+	  (c, arg, result) ->
+	    c.guard arg > 0
+	    arg + 2 == result
 
-qc.testPure intensify , [qc.arbInt],
+	qc.testPure intensify , [qc.arbInt],
+	  'intensify grows by 2 when negative',
+	  (c, arg, result) ->
+	    c.guard arg < 0
+	    arg - 2 == result
 
-  'intensify grows by 2 when positive',
+	qc.testPure intensify , [qc.arbConst(0)],
+	  'only non-zero intensify grows',
+	  (c, arg, result) ->
+	    result is 0
 
-  (c, arg, result) ->
-
-    c.guard arg > 0
-
-    arg + 2 == result
-
-qc.testPure intensify , [qc.arbInt],
-
-  'intensify grows by 2 when negative',
-
-  (c, arg, result) ->
-
-    c.guard arg < 0
-
-    arg - 2 == result
-
-qc.testPure intensify , [qc.arbConst(0)],
-
-  'only non-zero intensify grows',
-
-  (c, arg, result) ->
-
-    result is 0
-
-qc.test()
+	qc.test()
 
 13この書籍（訳者注：原版のこと）を作る際LYXと呼ばれる文書プロセッサが使われており、計算結果はLYXに統合されているMaximaによるものです。Maximaは、記号演算や精度制限の無い計算を行うことのできるコンピュータ代数システムです。
 
-解答
+###解答
 
-intensify = (n) ->
-
-  if n > 0
-
-    n + 2
-
-  else if n < 0
-
-    n - 2
-
-  else
-
-    n
+	intensify = (n) ->
+	  if n > 0
+        n + 2
+	  else if n < 0
+	    n - 2
+	  else
+	    n
 
 関数を書く前にテスト記述を書くことは、関数を把握するのに役立ちます。今までの例で見たように、テスト記述は、テスト対象である関数よりもかなり長いコードになります。二分ヒープには、クラスとそのテストケースのより実際的な例が述べられています。宣言的テストは、テストアルゴリズムおよび再利用可能なライブラリに非常に適しています。他にも好みと作業内容に応じて、さまざまなテストツールが存在します14。ここで強調しておきたいことは、「適切なレベルのテストを行うことは、コーディングの一部である」ということです。
 
+---
+
 関数の話に戻ります。関数は、return文は必須ではありません。return文無しで関数処理が終わった場合、関数は最後の命令文の値を戻り値とします。preludeのshow関数は、自身の引数をそのまま返すので、表現式の中で使うことができます。もしundefinedを返したい場合は、最後の命令文を「return」にします。
 
-yell = (message) ->
+	yell = (message) ->
+	  show message + '!!'
+	  return
+	yell 'Yow'
 
-  show message + '!!'
-
-  return
-
-yell 'Yow'
+---
 
 関数の引数は、内部変数のように利用できます。関数は呼び出し時の引数を参照しますが、これらは内部で定義された他の変数と同様、関数外では利用できません。また関数はトップレベルスコープとは別に、小さなローカルスコープを生成します。変数を参照する際、関数はまず外部スコープをチェックし、そこに変数が見つからない場合のみ、ローカルスコープに変数を生成します。
 
 14CoffeeScriptはほとんどのJavaScript用テストツールに対して互換性があり、簡単に利用することができます。
 
-dino = 'I am alive'
-
-reptile = 'I am A-OK'
-
-meteor = (reptile) ->
-
-  show reptile # Argument
-
-  dino = 'I am extinct'
-
-  reptile = 'I survived'
-
-  possum = 'I am new'
-
-show dino # Outer
-
-meteor 'What happened?'
-
-show dino # Outer changed
-
-show reptile # Outer unchanged
-
-try show possum catch e
-
-  show e.message # Error undefined
+	dino = 'I am alive'
+	reptile = 'I am A-OK'
+	meteor = (reptile) ->
+	  show reptile # Argument
+	  dino = 'I am extinct'
+	  reptile = 'I survived'
+	  possum = 'I am new'
+	show dino # Outer
+	meteor 'What happened?'
+	show dino # Outer changed
+	show reptile # Outer unchanged
+	try show possum catch e
+	  show e.message # Error undefined
 
 これによって、引数は同じ名前を持つ外部変数を「隠蔽する」ことができます。変数を扱うのに一番いい方法は、ファイル内で全ての変数にユニークな名前を付けることです。トップレベル変数は、明示的にエクスポートしない限りファイル間で共有することはできません。詳しくはモジュラー性を参照して下さい。
 
-
+![Alt text](../img/environments.png)
 
 従って関数内部の変数名が外部スコープにも存在した場合、その変数は外部スコープを参照しているものであって、新しく定義されたものではありません。variable = ‘何とか’ のような表現式は、新しい変数の定義かもしれませんし、あるいは既存の変数に代入しているだけかも知れません。
 
 トップレベル変数を使う場合には、ファイルの先頭部分でその変数を宣言してデフォルト値を与えておくのが、形式としては理想的です。
 
+	variable = 'first' # Definition
 
-
-
-
-variable = 'first' # Definition
-
-showVariable = ->
-
-  show 'In showVariable , the variable holds: ' +
-
-        variable # second
-
-test = ->
-
-  variable = 'second' # Assignment
-
-  show 'In test, the variable holds ' +
-
+	showVariable = ->
+	  show 'In showVariable , the variable holds: ' +
+	        variable # second
+	
+	test = ->
+	  variable = 'second' # Assignment
+	  show 'In test, the variable holds ' +
         variable + '.' # second
-
-  showVariable()
-
-show 'The variable is: ' + variable # first
-
-test()
-
-show 'The variable is: ' + variable # second
+	  showVariable()
+  
+	show 'The variable is: ' + variable # first
+	test()
+	show 'The variable is: ' + variable # second
 
 ローカルスコープで定義された変数は、関数内のコードでしか有効ではありません。関数がさらに別の関数を呼び出した場合、新しく呼び出された関数からは、呼び出し元の関数にある変数が見えないのです。
 
-andHere = ->
-
-  try show aLocal # Not defined
-
-  catch e then show e.message
-
-isHere = ->
-
-  aLocal = 'aLocal is defined'
-
-  andHere()
-
-isHere()
+	andHere = ->
+	  try show aLocal # Not defined
+	  catch e then show e.message
+	isHere = ->
+	  aLocal = 'aLocal is defined'
+	  andHere()
+	isHere()
 
 ここで一つ、些細ではありますが極めて役に立つ仕組みを紹介しておきます。それは「関数が別の関数内で定義された場合、内側の関数のローカルスコープは、それを囲むローカルスコープをベースにする」ということです。
 
-isHere = ->
+	isHere = ->
+	  andHere = ->
+	    try show aLocal # Is defined
+	    catch e then show e.message
+	  aLocal = 'aLocal is defined'
+	  andHere()
+	isHere()
 
-  andHere = ->
-
-    try show aLocal # Is defined
-
-    catch e then show e.message
-
-  aLocal = 'aLocal is defined'
-
-  andHere()
-
-isHere()
+---
 
 さらにこのケースをご覧ください。きっとビックリすると思います。
 
-varWhich = 'top-level'
-
-parentFunction = ->
-
-  varWhich = 'local'
-
-  childFunction = ->
-
-    show varWhich
-
-  childFunction
-
-child = parentFunction()
-
-child()
+	varWhich = 'top-level'
+	parentFunction = ->
+	  varWhich = 'local'
+	  childFunction = ->
+    	show varWhich
+	  childFunction
+	child = parentFunction()
+	child()
 
 parentFunction関数は内部関数を返し、コードの最後でその関数を呼び出しています。parentFunction関数はこの時点でとっくに処理を終えていますが、変数が値「local」を保持したローカルスコープはまだ残っています。従ってchildFunction関数はその値を参照するわけです。この仕組みをクロージャと呼びます。
 
+---
+
 スコープを使うことによって、関数を「統合する」ことができます。内部関数が、自身を包括する関数内の変数を使うことによって、さまざまな処理が可能になります。例えば引数に２を足す関数、５を足す関数などのように、機能的にはほとんど同一の関数を考えてみてください。
 
-makeAddFunction = (amount) ->
+	makeAddFunction = (amount) ->
+	  add = (number) -> number + amount
 
-  add = (number) -> number + amount
-
-addTwo = makeAddFunction 2
-
-addFive = makeAddFunction 5
-
-show addTwo(1) + addFive(1)
+	addTwo = makeAddFunction 2
+	addFive = makeAddFunction 5
+	show addTwo(1) + addFive(1)
+	
+---	
 
 スコープ化の法則により、異なる関数が同じ名前の変数を使っても衝突せず、さらに関数が自分自身を呼び出しても何の問題も生じないのです。関数が自分自身を呼び出すことを、再帰と呼びます。再帰関数は少々変わった定義の仕方をします。再帰関数を定義するにはまず停止条件が必要です。さもなければ、せっかく丁寧に作った再帰関数も、無限ループに陥ることになります。このpower関数を見てください。
 
-powerRec = (base, exponent) ->
-
-  if exponent == 0
-
-    1
-
-  else
-
-    base * powerRec base, exponent - 1
-
-show 'power 3, 3 = ' + powerRec 3, 3
+	powerRec = (base, exponent) ->
+	  if exponent == 0
+	    1
+	  else
+	    base * powerRec base, exponent - 1
+	show 'power 3, 3 = ' + powerRec 3, 3
 
 これは数学者が定義したべき乗に近く、筆者から見ても以前のバージョンよりもはるかに良いものに見えます。これはある種のループではありますが、whileも無くforも無く、さらにはローカルな副作用も存在しません。関数は自分自身を呼び出して、同じ処理を繰り返します。自分自身を呼び出す事で、関数は同じ効果を得る事ができます。停止条件はexponent変数が0になることであり、関数は呼び出しのたびにexponent変数から１を引き0に近づけてゆきます。もしpowerRec関数を再利用可能なライブラリ化した場合、exponent変数が自然数であるという前提条件を明確にドキュメント化しなければいけません。
 
+---
+
 コードを簡潔にすることで、パフォーマンスに影響が出てくるでしょうか？それを確かめるには、方法は一つしかありません。実際に計測してみることです。下に挙げたのは筆者のPCによる実行結果です。あくまでも一例としてお考えください。CPU、オペレーティングシステム、コンパイラー、ブラウザのインタープリタなどの全てがパフォーマンスに影響してきます。ですので可能な限りターゲット環境に近い状況で計測してください。
 
-timeIt = (func) ->
+	timeIt = (func) ->
+	  start = new Date()
+	  for i in [0...1000000] then func()
+	  show "Timing: #{(new Date() - start)*0.001}s"
 
-  start = new Date()
-
-  for i in [0...1000000] then func()
-
-  show "Timing: #{(new Date() - start)*0.001}s"
-
-timeIt -> p = add 9,18 # 0.042s
-
-timeIt -> p = Math.pow 9,18 # 0.049s
-
-timeIt -> p = power 9,18 # 0.464s
-
-timeIt -> p = powerRec 9,18 # 0.544s
+	timeIt -> p = add 9,18 # 0.042s
+	timeIt -> p = Math.pow 9,18 # 0.049s
+	timeIt -> p = power 9,18 # 0.464s
+	timeIt -> p = powerRec 9,18 # 0.544s
 
 実行速度とコードの読み易さとのトレードオフは、考慮に値するテーマです。またこの問題は、再帰関数を採用するか否かという場面に限らず出てきます。多くのケースで、読み易く直感的かつコンパクトな解法が、より複雑でしかし早い解法に取って代わられることがあります。
 
@@ -411,6 +309,8 @@ timeIt -> p = powerRec 9,18 # 0.544s
 
 もしシンプルで正しい実装ではあるものの、あまりにも遅いコードがあった場合、それは改良版をテストする時の参考として使うことができます。まず第一に考えなければいけないこと、それは、直面している問題を扱うにはどのようなデータ構造やアルゴリズムが必要かということです。例えば１０個の要素が入ったリストを検索するのと１００万個の要素が入ったリストを検索するのでは、大きな違いがあります。この種の問題は、検索でより深く掘り下げられています。
 
+---
+
 ところで、筆者は再帰について話していました。再帰と深く関係のある概念の一つに、スタックというものがあります。関数が呼ばれたとき、コントロール制御は関数本体に渡されます関数の内部に制御が移ります。関数本体から戻るとき、関数を呼び出した側のコード処理が再開します。関数本体の実行中、コンピュータは関数を呼び出したコンテクストを保持し、その後の処理の続行に備えておかなければいけません。コンテクストが保存される場所は、スタックと呼びます。
 
 スタック（訳者注：日本語で「積み重ね」の意味）と呼ばれるには理由があります。まずお分かりの通り、関数本体は、他の関数を呼び出すことができます。関数が呼ばれるたびに、コンテクストをその都度保存しなければいけません。これを、コンテクストが積み重なってゆくイメージとして捉えてみて下さい。関数が呼ばれるたびに、現在のコンテクストがスタックの一番上に置かれます。関数が戻ったとき、一番上のスタックが取り除かれ処理が再開されます。
@@ -419,49 +319,34 @@ timeIt -> p = powerRec 9,18 # 0.544s
 
 ですので再帰関数を書く際には、必ずスタックの存在を念頭に入れておいて下さい。
 
-chicken = ->
-
-  show 'Lay an egg'
-
-  egg()
-
-egg = ->
-
-  show 'Chick hatched'
-
-  chicken()
-
-try show chicken() + ' came first.'
-
-catch error then show error.message
+	chicken = ->
+	  show 'Lay an egg'
+	  egg()
+	egg = ->
+	  show 'Chick hatched'
+	  chicken()
+	try show chicken() + ' came first.'
+	catch error then show error.message
 
 これは間違ったプログラムの書き方ですが、非常に興味深い特徴があります。この例は、関数が再帰的であるためには、必ずしも自分自身を直接呼び出さなくても良いということを示しているのです。直接的であれ間接的であれ、別の関数が最初の関数を再び呼び出せば、これは立派な再帰といえます。tryとcatchについては、例外処理で述べられています。
+
+---
 
 再帰関数は、必ずしもループよりも非効率的な代替手段というわけではありません。幾つかの問題では、ループよりも再帰関数を使った方がはるかに解きやすいものがあります。よくある例として、何本もの「枝」があり、各々の枝がさらに幾つもの枝を生やしているような構造を探索・処理する問題が挙げられます。
 
 次のパズルを考えてみてください。１から始めて、毎回前の数に5を足すか3を掛けるかして、無限に数を生成してゆく様を想像してみてください。そしてある数に対して、どのような順番で足し算や掛け算を処理したらその数に行き着いたかを見つけ出す関数を作って下さい。例えば13は、まず1に3を掛けてそれから5を2回足した数字です。一方15には、どう計算してもたどり着くことはできません。
 
-findSequence = (goal) ->
-
-  find = (start, history) ->
-
-    if start == goal
-
-      history
-
-    else if start > goal
-
-      null
-
-    else
-
-      find(start + 5, '(' + history + ' + 5)') ? \
-
-      find(start * 3, '(' + history + ' * 3)')
-
-  find 1, '1'
-
-show findSequence 24
+	findSequence = (goal) ->
+	  find = (start, history) ->
+	    if start == goal
+	      history
+	    else if start > goal
+	      null
+	    else
+	      find(start + 5, '(' + history + ' + 5)') ? \
+	      find(start * 3, '(' + history + ' * 3)')
+	  find 1, '1'
+	show findSequence 24
 
 気をつけて欲しいのは、見つかった解は必ずしも最短の計算過程による結果ではない、ということです。この関数は、最初に見つかった計算過程を返すだけです。
 
@@ -469,39 +354,38 @@ show findSequence 24
 
 ここにある存在演算子「?」は、「startに5を足した結果発見した解法を返す。もしそれが失敗したら、startに3を掛けた結果発見した解法を返す」という風に使われています。
 
+---
+
 通常関数を定義するときは、後で参照して呼び出せるように名前をつけてやります。ただ関数名は必須ではなく、名前を付けない方が良いケースもあります。そんな時は代わりに匿名関数を使いましょう。
 
 例として、先ほど見たmakeAddFunction関数を少し変えてみます。
 
-makeAddFunction = (amount) ->
-
-  (number) -> number + amount
-
-show makeAddFunction(11) 3
+	makeAddFunction = (amount) ->
+	  (number) -> number + amount
+	
+	show makeAddFunction(11) 3
 
 最初のバージョンのmakeAddFunction 関数にあったadd関数は一度しか参照されなかったため、名前は全く役に立っていません。そのため、関数値を直接戻したほうが理に適っているでしょう。
 
-練習問題9
+##練習問題9
 
 number型である引数を一つ取り、数値比較テスト関数を返すgreaterThan関数を書いて下さい。戻り値である関数も一つのnumber型を引数に取り、次のようにboolean型を返します。すなわち、与えられた数値がテスト関数を作った時の数値より大きかったらtrueを返し、そうではない場合はfalseを返します。
 
-解答
+###解答
 
-greaterThan = (x) ->
+	greaterThan = (x) ->
+	  (y) -> y > x
 
-  (y) -> y > x
-
-greaterThanTen = greaterThan 10
-
-show greaterThanTen 9
+	greaterThanTen = greaterThan 10
+	show greaterThanTen 9
 
 次の命令文を試してみてください。
 
-yell ‘こんにちは’, ‘こんばんは’, ‘元気？’
+	yell ‘こんにちは’, ‘こんばんは’, ‘元気？’
 
 本章の最初のほうで定義されたyell関数は、引数を一つしか取ることができません。このように呼び出した場合、コンピュータは何一つ文句を言わず、黙って他の引数を無視します。
 
-yell()
+	yell()
 
 当然ながら、少ない引数で関数を実行することもできます。引数を指定しなかった場合、関数内部での引数の値はundefinedになります。
 
@@ -509,19 +393,6 @@ yell()
 
 おかげで、console.logをこのように呼び出すことができます。
 
-console.log 'R', 2, 'D', 2
+	console.log 'R', 2, 'D', 2
 
 もちろん逆に、関数が決まった数の引数を取るにもかかわらず、間違った数の引数を渡してしまい、しかもそれに気付かないというケースもあり得ます。
-
-
-
-Takaichi Kubo
-
-Takashi Tsuda
-
-Takahiro Yoshida
-
--Main translator
-
-Yayoi Kinosita
-Tsutomu Kawamura
